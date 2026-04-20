@@ -1,0 +1,9 @@
+# Mengabaikan folder virtual environment
+venv/
+env/
+.venv/
+bin/
+Include/
+Lib/
+Scripts/
+pyvenv.cfg
