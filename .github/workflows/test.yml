@@ -2,107 +2,107 @@ name: TaskFlow Automation Tests
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   schedule:
-    - cron: '0 2 * * *'
+    - cron: "0 2 * * *"
 
 jobs:
   backend-tests:
     runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4 # Update ke v4
 
-    - name: Setup Python
-      uses: actions/setup-python@v5 # Update ke v5
-      with:
-        python-version: '3.11' # Update ke 3.11 sesuai kebutuhan package Anda
-    
-    - name: Install Backend Dependencies
-      run: |
-        cd backend
-        # Menghapus pywin32 secara paksa jika ada di requirements karena ini runner Linux
-        sed -i '/pywin32/d' requirements.txt || true
-        pip install -r requirements.txt
-    
-    - name: Start Backend Server
-      run: |
-        cd backend
-        # Jalankan di background
-        python -m uvicorn main:app --host 0.0.0.0 --port 8000 &
-        sleep 10 # Beri waktu lebih lama agar server benar-benar siap
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4 # Update ke v4
-      with:
-        node-version: '20'
-    
-    - name: Install Newman
-      run: npm install -g newman newman-reporter-htmlextra
-    
-    - name: Run API Tests
-      run: |
-        mkdir -p reports
-        newman run tests/postman/TaskFlow_API_Collection.json \
-          -e tests/postman/TaskFlow_CI_Environment.json \
-          --reporters cli,htmlextra \
-          --reporter-htmlextra-export reports/api-test-report.html
-    
-    - name: Upload API Test Report
-      uses: actions/upload-artifact@v4 # Sudah v4, aman
-      if: always()
-      with:
-        name: api-test-report
-        path: reports/api-test-report.html
+    steps:
+      - uses: actions/checkout@v4 # Update ke v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5 # Update ke v5
+        with:
+          python-version: "3.11" # Update ke 3.11 sesuai kebutuhan package Anda
+
+      - name: Install Backend Dependencies
+        run: |
+          cd backend
+          # Menghapus pywin32 secara paksa jika ada di requirements karena ini runner Linux
+          sed -i '/pywin32/d' requirements.txt || true
+          pip install -r requirements.txt
+
+      - name: Start Backend Server
+        run: |
+          cd backend
+          # Jalankan di background
+          python -m uvicorn main:app --host 0.0.0.0 --port 8000 &
+          sleep 10 # Beri waktu lebih lama agar server benar-benar siap
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4 # Update ke v4
+        with:
+          node-version: "20"
+
+      - name: Install Newman
+        run: npm install -g newman newman-reporter-htmlextra
+
+      - name: Run API Tests
+        run: |
+          mkdir -p reports
+          newman run test/postman/TaskFlow_API_Collection.json \
+            -e test/postman/TaskFlow_CI_Environment.json \
+            --reporters cli,htmlextra \
+            --reporter-htmlextra-export reports/api-test-report.html
+
+      - name: Upload API Test Report
+        uses: actions/upload-artifact@v4 # Sudah v4, aman
+        if: always()
+        with:
+          name: api-test-report
+          path: reports/api-test-report.html
 
   frontend-tests:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.2'
-    
-    - name: Start PHP Server
-      run: |
-        cd frontend
-        php -S 127.0.0.1:8080 &
-        sleep 5
-    
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-    
-    - name: Install Selenium Dependencies
-      run: |
-        pip install selenium pytest pytest-html webdriver-manager
-    
-    - name: Run Selenium Tests
-      env:
-        HEADLESS: "true"
-      run: |
-        mkdir -p reports/screenshots
-        cd tests/selenium
-        pytest test_frontend.py -v \
-          --html=../../reports/frontend-test-report.html \
-          --self-contained-html
-    
-    - name: Upload Selenium Test Report
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: frontend-test-report
-        path: reports/frontend-test-report.html
-    
-    - name: Upload Screenshots (if failures)
-      uses: actions/upload-artifact@v4
-      if: failure()
-      with:
-        name: selenium-screenshots
-        path: reports/screenshots/
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+
+      - name: Start PHP Server
+        run: |
+          cd frontend
+          php -S 127.0.0.1:8080 &
+          sleep 5
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Selenium Dependencies
+        run: |
+          pip install selenium pytest pytest-html webdriver-manager
+
+      - name: Run Selenium Tests
+        env:
+          HEADLESS: "true"
+        run: |
+          mkdir -p reports/screenshots
+          cd tests/selenium
+          pytest test_frontend.py -v \
+            --html=../../reports/frontend-test-report.html \
+            --self-contained-html
+
+      - name: Upload Selenium Test Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-test-report
+          path: reports/frontend-test-report.html
+
+      - name: Upload Screenshots (if failures)
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: selenium-screenshots
+          path: reports/screenshots/
