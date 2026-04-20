@@ -13,29 +13,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4 # Update ke v4
+      - uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v5 # Update ke v5
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.11" # Update ke 3.11 sesuai kebutuhan package Anda
+          python-version: "3.11"
 
       - name: Install Backend Dependencies
         run: |
           cd backend
-          # Menghapus pywin32 secara paksa jika ada di requirements karena ini runner Linux
           sed -i '/pywin32/d' requirements.txt || true
           pip install -r requirements.txt
 
       - name: Start Backend Server
         run: |
           cd backend
-          # Jalankan di background
           python -m uvicorn main:app --host 0.0.0.0 --port 8000 &
-          sleep 10 # Beri waktu lebih lama agar server benar-benar siap
+          sleep 10
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4 # Update ke v4
+        uses: actions/setup-node@v4
         with:
           node-version: "20"
 
@@ -51,7 +49,7 @@ jobs:
             --reporter-htmlextra-export reports/api-test-report.html
 
       - name: Upload API Test Report
-        uses: actions/upload-artifact@v4 # Sudah v4, aman
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: api-test-report
@@ -63,6 +61,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 🔥 TAMBAHKAN: Setup Python dan Backend Server
+      - name: Setup Python for Backend
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Backend Dependencies
+        run: |
+          cd backend
+          sed -i '/pywin32/d' requirements.txt || true
+          pip install -r requirements.txt
+
+      - name: Start Backend Server
+        run: |
+          cd backend
+          python -m uvicorn main:app --host 127.0.0.1 --port 8000 &
+          # Tunggu backend siap
+          sleep 10
+          # Health check untuk memastikan backend benar-benar siap
+          for i in {1..10}; do
+            if curl -s http://127.0.0.1:8000/docs > /dev/null; then
+              echo "✅ Backend is ready!"
+              break
+            fi
+            echo "⏳ Waiting for backend... ($i/10)"
+            sleep 2
+          done
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -73,19 +99,23 @@ jobs:
           cd frontend
           php -S 127.0.0.1:8080 &
           sleep 5
+          # Health check untuk frontend
+          curl -s http://127.0.0.1:8080 > /dev/null && echo "✅ Frontend is ready!"
 
-      - name: Setup Python
+      - name: Setup Python for Selenium
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install Selenium Dependencies
         run: |
-          pip install selenium pytest pytest-html webdriver-manager
+          pip install selenium pytest pytest-html webdriver-manager requests
 
       - name: Run Selenium Tests
         env:
           HEADLESS: "true"
+          BACKEND_URL: "http://127.0.0.1:8000"  # 🔥 Tambahkan environment variable
+          FRONTEND_URL: "http://127.0.0.1:8080" # 🔥 Tambahkan environment variable
         run: |
           mkdir -p reports/screenshots
           cd test/selenium
