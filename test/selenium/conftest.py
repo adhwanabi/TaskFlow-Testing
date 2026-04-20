@@ -43,6 +43,13 @@ def driver():
 def frontend_url():
     return FRONTEND_URL
 
+# Saat menjalankan pytest-xdist paralel, kita ingin semua test Selenium
+# tetap berjalan serial (tidak bersamaan) agar koneksi WebDriver stabil.
+def pytest_collection_modifyitems(config, items):
+    for item in items:
+        item.add_marker(pytest.mark.selenium)
+        item.add_marker(pytest.mark.xdist_group("selenium"))
+
 # Hook untuk screenshot saat test gagal
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
