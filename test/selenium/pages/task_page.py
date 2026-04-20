@@ -63,7 +63,7 @@ class TaskPage:
         self.driver.find_element(*self.BTN_SUBMIT).click()
         
         # Tunggu alert muncul (indikasi sukses)
-        self.wait.until(EC.presence_of_element_located(self.ALERT_SUCCESS))
+        self.wait.until(EC.visibility_of_element_located(self.ALERT_SUCCESS))
     
     def reset_form(self):
         """Reset form ke keadaan awal"""
@@ -135,8 +135,9 @@ class TaskPage:
     def update_task_in_modal(self, title=None, description=None, status=None):
         """Update tugas melalui modal edit"""
         if title is not None:
-            title_input = self.driver.find_element(*self.MODAL_TITLE)
-            title_input.clear()
+            title_input = self.wait.until(EC.element_to_be_clickable(self.MODAL_TITLE))
+            title_input.send_keys(Keys.CONTROL + "a")
+            title_input.send_keys(Keys.BACKSPACE)
             title_input.send_keys(title)
         
         if description is not None:
@@ -153,7 +154,7 @@ class TaskPage:
         
         # Tunggu modal tertutup dan alert muncul
         self.wait.until(EC.invisibility_of_element_located(self.MODAL_EDIT))
-        self.wait.until(EC.presence_of_element_located(self.ALERT_SUCCESS))
+        self.wait.until(EC.visibility_of_element_located(self.ALERT_SUCCESS))
     
     def get_alert_message(self):
         """Mendapatkan teks dari alert yang muncul"""

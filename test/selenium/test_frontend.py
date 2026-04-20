@@ -1,4 +1,7 @@
 # tests/selenium/test_frontend.py
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait 
+from selenium.webdriver.support import expected_conditions as EC
 import pytest
 import time
 from pages.task_page import TaskPage
@@ -11,7 +14,7 @@ class TestTaskFlowFrontend:
         """Setup sebelum setiap test"""
         self.page = TaskPage(driver)
         self.driver = driver
-        # Refresh halaman untuk memastikan state bersih
+        self.wait = WebDriverWait(driver, 10) # Standarisasi wait
         self.page.refresh_tasks()
     
     # ========== Test Cases ==========
@@ -167,28 +170,31 @@ class TestTaskFlowFrontend:
     
     def test_modal_close_buttons(self):
         """TC-FE-010: Memastikan modal edit bisa ditutup dengan berbagai cara"""
-        # Arrange
         task_title = f"Modal Test {time.time()}"
         self.page.create_task(task_title, "Test modal", "pending")
         
-        # Test 1: Tutup dengan tombol X
+        # Test 1: Tombol X (Sudah Passed)
         self.page.click_edit_task(task_title)
         self.driver.find_element(*self.page.BTN_CLOSE_MODAL).click()
-        assert not self.driver.find_element(*self.page.MODAL_EDIT).is_displayed()
-        print("  ✓ Modal bisa ditutup dengan tombol X")
+        assert self.wait.until(EC.invisibility_of_element_located(self.page.MODAL_EDIT))
         
-        # Test 2: Tutup dengan tombol Cancel
+        # Test 2: Tombol Cancel (Sudah Passed)
         self.page.click_edit_task(task_title)
         self.driver.find_element(*self.page.BTN_CANCEL_EDIT).click()
-        assert not self.driver.find_element(*self.page.MODAL_EDIT).is_displayed()
-        print("  ✓ Modal bisa ditutup dengan tombol Cancel")
+        assert self.wait.until(EC.invisibility_of_element_located(self.page.MODAL_EDIT))
         
-        # Test 3: Tutup dengan klik di luar modal
+        # Test 3: Klik di luar modal (PERBAIKAN)
         self.page.click_edit_task(task_title)
-        # Klik backdrop
-        self.driver.find_element(By.CSS_SELECTOR, ".modal-backdrop").click()
-        time.sleep(0.5)
-        assert not self.driver.find_element(*self.page.MODAL_EDIT).is_displayed()
+        
+        # Cara paling stabil: Klik pada koordinat (0,0) atau area body yang kosong
+        from selenium.webdriver.common.action_chains import ActionChains
+        actions = ActionChains(self.driver)
+        # Klik sedikit bergeser dari pojok kiri atas (misal 5,5) untuk memicu klik luar
+        actions.move_by_offset(5, 5).click().perform()
+        
+        # Pastikan modal hilang
+        is_hidden = self.wait.until(EC.invisibility_of_element_located(self.page.MODAL_EDIT))
+        assert is_hidden
         print("  ✓ Modal bisa ditutup dengan klik di luar")
     
     def test_empty_state_when_no_tasks(self):
