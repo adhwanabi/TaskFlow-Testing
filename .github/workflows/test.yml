@@ -88,7 +88,7 @@ jobs:
           HEADLESS: "true"
         run: |
           mkdir -p reports/screenshots
-          cd tests/selenium
+          cd test/selenium
           pytest test_frontend.py -v \
             --html=../../reports/frontend-test-report.html \
             --self-contained-html
