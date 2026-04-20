@@ -44,6 +44,16 @@
 						"type": "text/javascript",
 						"packages": {}
 					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
 				}
 			],
 			"request": {
@@ -108,6 +118,13 @@
 						"type": "text/javascript",
 						"packages": {}
 					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"packages": {},
+						"type": "text/javascript"
+					}
 				}
 			],
 			"request": {
@@ -140,7 +157,7 @@
 							"pm.test(\"Task ID should match requested ID\", function () {\r",
 							"    const jsonData = pm.response.json();\r",
 							"    const requestedId = pm.environment.get(\"task_id\");\r",
-							"    pm.expect(jsonData.id.toString()).to.eql(requestedId);\r",
+							"    pm.expect(jsonData.id.toString()).to.eql(requestedId.toString());\r",
 							"});\r",
 							"\r",
 							"pm.test(\"Should return correct task properties\", function () {\r",
@@ -160,10 +177,11 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{base_url}}/api/tasks/{{task_id}}",
+					"raw": "URL: {{base_url}}/api/tasks/{{task_id}}",
 					"host": [
-						"{{base_url}}"
+						"URL"
 					],
+					"port": " {{base_url}}",
 					"path": [
 						"api",
 						"tasks",
