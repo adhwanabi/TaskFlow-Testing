@@ -42,8 +42,33 @@ class TaskPage:
     def __init__(self, driver):
         self.driver = driver
         self.wait = WebDriverWait(driver, 10)
-    
+        self._last_alert_message = None
+
     # ========== Actions ==========
+
+    def _wait_for_visible_alert(self, timeout=10):
+        """Menunggu sampai ada alert sukses/gagal yang terlihat."""
+        wait = WebDriverWait(self.driver, timeout)
+
+        def _visible_alert(_driver):
+            for locator in (self.ALERT_SUCCESS, self.ALERT_DANGER):
+                for element in _driver.find_elements(*locator):
+                    if element.is_displayed():
+                        return element
+            return False
+
+        return wait.until(_visible_alert)
+
+    def _capture_alert_message(self, timeout=10):
+        """Ambil teks alert yang terlihat dan simpan sebagai last message."""
+        try:
+            alert_element = self._wait_for_visible_alert(timeout=timeout)
+            message = (alert_element.text or "").strip()
+            if message:
+                self._last_alert_message = message
+            return message
+        except Exception:
+            return self._last_alert_message or ""
     
     def create_task(self, title, description="", status="pending"):
         """Membuat tugas baru melalui form"""
@@ -64,6 +89,8 @@ class TaskPage:
         
         # Tunggu alert muncul (indikasi sukses)
         self.wait.until(EC.visibility_of_element_located(self.ALERT_SUCCESS))
+        # Simpan pesan alert segera (alert auto-dismiss setelah beberapa detik)
+        self._capture_alert_message(timeout=2)
     
     def reset_form(self):
         """Reset form ke keadaan awal"""
@@ -155,11 +182,12 @@ class TaskPage:
         # Tunggu modal tertutup dan alert muncul
         self.wait.until(EC.invisibility_of_element_located(self.MODAL_EDIT))
         self.wait.until(EC.visibility_of_element_located(self.ALERT_SUCCESS))
+        self._capture_alert_message(timeout=2)
     
     def get_alert_message(self):
         """Mendapatkan teks dari alert yang muncul"""
-        alert = self.wait.until(EC.presence_of_element_located(self.ALERT_CONTAINER))
-        return alert.text
+        # Alert container selalu ada; ambil teks alert yang terlihat (atau fallback ke last message)
+        return self._capture_alert_message(timeout=2)
     
     def is_empty_state_displayed(self):
         """Memeriksa apakah empty state ditampilkan"""

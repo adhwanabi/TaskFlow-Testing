@@ -1,0 +1,55 @@
+[
+  {
+    "name": "root_should_return_welcome_message",
+    "method": "GET",
+    "path": "/",
+    "expected_status": 200,
+    "assert_json_subset": { "docs": "/docs" }
+  },
+  {
+    "name": "list_tasks_should_return_list",
+    "method": "GET",
+    "path": "/api/tasks",
+    "expected_status": 200,
+    "assert_type": "list"
+  },
+  {
+    "name": "create_task_should_return_task",
+    "method": "POST",
+    "path": "/api/tasks",
+    "json": { "title": "Task dari data-driven test", "description": "desc", "status": "pending" },
+    "expected_status": 201,
+    "assert_keys": ["id", "title", "description", "status", "created_at"]
+  },
+  {
+    "name": "get_task_by_id_should_return_task",
+    "setup": {
+      "create_task": { "title": "Task untuk GET by id", "description": "x", "status": "pending" }
+    },
+    "method": "GET",
+    "path": "/api/tasks/{task_id}",
+    "expected_status": 200,
+    "assert_json_subset": { "title": "Task untuk GET by id", "status": "pending" }
+  },
+  {
+    "name": "update_task_should_update_fields",
+    "setup": {
+      "create_task": { "title": "Task untuk update", "description": "x", "status": "pending" }
+    },
+    "method": "PUT",
+    "path": "/api/tasks/{task_id}",
+    "json": { "title": "Updated title", "description": "updated", "status": "completed" },
+    "expected_status": 200,
+    "assert_json_subset": { "title": "Updated title", "status": "completed" }
+  },
+  {
+    "name": "delete_task_should_return_204",
+    "setup": {
+      "create_task": { "title": "Task untuk delete", "description": null, "status": "pending" }
+    },
+    "method": "DELETE",
+    "path": "/api/tasks/{task_id}",
+    "expected_status": 204
+  }
+]
+
